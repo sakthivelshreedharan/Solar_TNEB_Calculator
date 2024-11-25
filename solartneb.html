@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TNEB Solar Electricity Consumption Tracker</title>
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: 30px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #3f51b5;
+            font-size: 1.75rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        label {
+            font-size: 0.9rem;
+            margin: 6px 0;
+            display: block;
+        }
+
+        /* Flexbox for input fields alignment */
+        .input-group {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .input-group input {
+            flex: 2;
+            max-width: 120px;
+            padding: 8px;
+            font-size: 0.9rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            max-width: 150px;
+            padding: 8px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #3f51b5;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #303f9f;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            text-align: center;
+            padding: 8px;
+            border: 1px solid #ddd;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        td span {
+            font-weight: bold;
+        }
+
+        .history-table {
+            margin-top: 20px;
+        }
+
+        /* Sticky Header for Table */
+        thead {
+            position: sticky;
+            top: 0;
+            background-color: #f4f4f4;
+        }
+
+        .chart-container {
+            margin-top: 20px;
+            height: 300px;
+        }
+
+        /* Export Buttons */
+        .export-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .export-buttons button {
+            background-color: #4caf50;
+            margin: 0 10px;
+            border: none;
+            padding: 10px 18px;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .export-buttons button:hover {
+            background-color: #45a049;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .input-group input {
+                margin-bottom: 10px;
+            }
+
+            .export-buttons button {
+                padding: 10px 14px;
+            }
+
+            .history-table {
+                margin-top: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .section-title {
+                font-size: 0.9rem;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .input-group input {
+                max-width: 100%;
+            }
+
+            .history-table {
+                margin-top: 10px;
+            }
+        }
+
+        /* Color coding for units */
+        .positive {
+            color: red;
+        }
+
+        .negative {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TNEB Solar Electricity Consumption Tracker</h1>
+
+        <!-- Initial Reading Section -->
+        <div class="section-title">Last billing reading</div>
+        <div class="input-group">
+            <label for="importInitial">Import KWH Reading (kWh):</label>
+            <input type="number" id="importInitial" disabled>
+        </div>
+
+        <div class="input-group">
+            <label for="exportInitial">Export KWH Reading (kWh):</label>
+            <input type="number" id="exportInitial" disabled>
+        </div>
+
+        <div>
+            <button onclick="saveInitialReadings()">Save Initial</button>
+            <button onclick="editInitialReadings()">Edit Initial</button>
+        </div>
+
+        <!-- Current Reading Section -->
+        <div class="section-title">Record Current Readings</div>
+        <div class="input-group">
+            <label for="importCurrent">Current Import Reading (kWh):</label>
+            <input type="number" id="importCurrent">
+        </div>
+
+        <div class="input-group">
+            <label for="exportCurrent">Current Export Reading (kWh):</label>
+            <input type="number" id="exportCurrent">
+        </div>
+
+        <button onclick="calculateNetConsumption()">Record Reading</button>
+
+        <!-- History Table -->
+        <div class="history-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date/Time</th>
+                        <th>Import KWh</th>
+                        <th>Export KWh</th>
+                        <th>Units Consumed</th>
+                        <th>Status</th>
+                        <th>Rate Card</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTable"></tbody>
+            </table>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="chart-container" id="chart"></div>
+
+        <!-- Export Buttons -->
+        <div class="export-buttons">
+            <button onclick="exportToCSV()">Export to CSV</button>
+            <button onclick="exportToText()">Export to Text</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const rateCard = [
+            { upperLimit: 100, rate: 0 },
+            { upperLimit: 200, rate: 2.50 },
+            { upperLimit: 400, rate: 4.70 },
+            { upperLimit: 500, rate: 6.30 },
+            { upperLimit: 600, rate: 8.40 },
+            { upperLimit: 800, rate: 9.45 },
+            { upperLimit: 1000, rate: 10.50 },
+            { upperLimit: Infinity, rate: 11.55 }
+        ];
+
+        window.onload = function() {
+            if (localStorage.getItem('importInitial')) {
+                document.getElementById('importInitial').value = localStorage.getItem('importInitial');
+                document.getElementById('exportInitial').value = localStorage.getItem('exportInitial');
+            }
+            loadHistory();
+        };
+
+        function saveInitialReadings() {
+            const importInitial = document.getElementById('importInitial').value;
+            const exportInitial = document.getElementById('exportInitial').value;
+            localStorage.setItem('importInitial', importInitial);
+            localStorage.setItem('exportInitial', exportInitial);
+            document.getElementById('importInitial').disabled = true;
+            document.getElementById('exportInitial').disabled = true;
+            alert('Initial readings saved!');
+        }
+
+        function editInitialReadings() {
+            document.getElementById('importInitial').disabled = false;
+            document.getElementById('exportInitial').disabled = false;
+        }
+
+        function calculateNetConsumption() {
+            const importInitial = parseFloat(localStorage.getItem('importInitial') || 0);
+            const exportInitial = parseFloat(localStorage.getItem('exportInitial') || 0);
+            const importCurrent = parseFloat(document.getElementById('importCurrent').value);
+            const exportCurrent = parseFloat(document.getElementById('exportCurrent').value);
+
+            const netConsumption = (importCurrent - importInitial) - (exportCurrent - exportInitial);
+            const statusClass = netConsumption > 0 ? 'positive' : 'negative';
+            const status = `<span class="${statusClass}">${netConsumption.toFixed(2)} kWh</span>`;
+            const rate = calculateRate(netConsumption);
+            const rateStatus = `₹${rate.toFixed(2)}`;
+
+            const timestamp = new Date().toLocaleString();
+            saveHistory(timestamp, importCurrent, exportCurrent, netConsumption, status, rateStatus);
+            renderHistory();
+        }
+
+        function calculateRate(consumption) {
+            let rate = 0;
+            for (let i = 0; i < rateCard.length; i++) {
+                if (consumption <= rateCard[i].upperLimit) {
+                    rate = consumption * rateCard[i].rate;
+                    break;
+                }
+            }
+            return rate;
+        }
+
+        function saveHistory(timestamp, importCurrent, exportCurrent, consumption, status, rate) {
+            const history = loadHistoryFromStorage();
+            history.push({ timestamp, importCurrent, exportCurrent, consumption, status, rate });
+            localStorage.setItem('history', JSON.stringify(history));
+        }
+
+        function loadHistoryFromStorage() {
+            return JSON.parse(localStorage.getItem('history')) || [];
+        }
+
+        function renderHistory() {
+            const history = loadHistoryFromStorage();
+            const tableBody = document.getElementById('historyTable');
+            tableBody.innerHTML = '';
+            history.forEach(record => {
+                const row = `<tr>
+                                <td>${record.timestamp}</td>
+                                <td>${record.importCurrent}</td>
+                                <td>${record.exportCurrent}</td>
+                                <td>${record.consumption} kWh</td>
+                                <td>${record.status}</td>
+                                <td>${record.rate}</td>
+                            </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        function loadHistory() {
+            renderHistory();
+            renderChart();
+        }
+
+        function renderChart() {
+            const history = loadHistoryFromStorage();
+            const labels = history.map(record => record.timestamp);
+            const data = history.map(record => record.consumption);
+
+            const ctx = document.getElementById('chart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Units Consumed (kWh)',
+                        data: data,
+                        borderColor: 'rgb(75, 192, 192)',
+                        fill: false,
+                    }]
+                }
+            });
+        }
+
+        function exportToCSV() {
+            const history = loadHistoryFromStorage();
+            let csvContent = "Date/Time,Import KWh,Export KWh,Units Consumed,Status,Rate Card\n";
+            history.forEach(record => {
+                csvContent += `${record.timestamp},${record.importCurrent},${record.exportCurrent},${record.consumption},${record.status},${record.rate}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'electricity_readings.csv');
+            a.click();
+        }
+
+        function exportToText() {
+            const history = loadHistoryFromStorage();
+            let textContent = "Date/Time | Import KWh | Export KWh | Units Consumed | Status | Rate Card\n";
+            history.forEach(record => {
+                textContent += `${record.timestamp} | ${record.importCurrent} | ${record.exportCurrent} | ${record.consumption} | ${record.status} | ${record.rate}\n`;
+            });
+            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'electricity_readings.txt');
+            a.click();
+        }
+    </script>
+</body>
+</html>
